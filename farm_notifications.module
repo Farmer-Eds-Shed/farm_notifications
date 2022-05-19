@@ -14,7 +14,7 @@ use Drupal\Core\Entity\EntityInterface;
 function farm_notifications_log_update(EntityInterface $entity) {
 
 	//log variables		
-	$name = $entity->name->value;
+	$name = $entity->label();
 	$id = $entity->id();
 	$uuid = $entity->uuid();
 	$status = $entity->status->value;
