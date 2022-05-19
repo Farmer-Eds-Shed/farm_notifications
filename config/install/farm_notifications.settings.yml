@@ -1,2 +1,2 @@
-server_address: http://192.168.1.15:1880/farmos/webhook
+server_address: http://127.0.0.1:1880/farmos
 server_type: node_red
