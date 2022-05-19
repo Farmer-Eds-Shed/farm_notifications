@@ -21,7 +21,7 @@ class FarmNotificationsSettingsForm extends ConfigFormbase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'farm notifications settings';
+    return 'farm_notifications_settings';
   }
 
   /**
