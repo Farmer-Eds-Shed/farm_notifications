@@ -1,0 +1,5 @@
+farm_notifications.settings:
+  base_route: farm_settings.settings_page
+  route_name: farm_notifications.settings
+  title: 'Notifications'
+  weight: 6

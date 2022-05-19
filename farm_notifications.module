@@ -1,0 +1,62 @@
+<?php
+
+/**
+ * @file
+ * Contains farm_notifications.module.
+ */
+use Drupal\Core\Entity\EntityInterface;
+
+/**
+ * Implements hook_ENTITY_TYPE_update().
+ */
+
+
+function farm_notifications_log_update(EntityInterface $entity) {
+
+	//log variables		
+	$name = $entity->name->value;
+	$id = $entity->id();
+	$uuid = $entity->uuid();
+	$status = $entity->status->value;
+	$notes = $entity->notes->value;
+	$full_log = $entity->toArray();
+	//settings variables
+	$server_address = \Drupal::config('farm_notifications.settings')->get('server_address');
+	$server_type = \Drupal::config('farm_notifications.settings')->get('server_type');
+
+if ($server_type == "node_red"){
+	//http request
+	try {
+		//Create httpClient.
+		$client = \Drupal::httpClient();
+		//Some Data
+	$json_data = ['log'=>$name,'id'=>$id,'uuid'=>$uuid,'status'=>$status,'notes'=>$notes,'full_log'=>$full_log];
+		//Sending POST Request with $json_data to external server
+		$request = $client->post($server_address, [ 'json' => [ $json_data, ]]);
+		//Getting Response after JSON Decode.
+		$response = json_decode($request->getBody());
+	} 
+	//Catch http exceptions and log errors
+	catch (\Exception $e) {
+		\Drupal::logger('farm_notifications')->error($e->getMessage());
+	}
+}
+
+if ($server_type == "ntfy"){
+	//http request
+	try {
+		//Create httpClient.
+		$client = \Drupal::httpClient();
+		//Some Data
+		$data = "FarmOS Log updated: $name \n Status: $status";
+		//Sending POST Request with $json_data to external server
+	$request = $client->post($server_address, [ 'body' => $data]);
+		//Getting Response after JSON Decode.
+		$response = json_decode($request->getBody());
+	} 
+	//Catch http exceptions and log errors
+	catch (\Exception $e) {
+		\Drupal::logger('farm_notifications')->error($e->getMessage());
+	}
+	}
+}
