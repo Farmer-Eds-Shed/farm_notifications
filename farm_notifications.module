@@ -19,7 +19,7 @@ function farm_notifications_log_update(EntityInterface $entity) {
 	$status = $entity->status->value;
 	$notes = $entity->notes->value;
 	$full_log = $entity->toArray();
-	$notify = $entity->farm_notification_notify->value;
+	$notify = $entity->notify->value;
 	$timestamp = $entity->timestamp->value;
 	//settings variables
 	$server_address = \Drupal::config('farm_notifications.settings')->get('server_address');
@@ -112,7 +112,7 @@ function farm_notifications_entity_base_field_info(EntityTypeInterface $entity_t
       ],
     ];
     //Define field
-    $fields['farm_notification_notify'] = \Drupal::service('farm_field.factory')->baseFieldDefinition($options);
+    $fields['notify'] = \Drupal::service('farm_field.factory')->baseFieldDefinition($options);
   }
 
   return $fields;
