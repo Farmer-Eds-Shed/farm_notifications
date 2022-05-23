@@ -5,12 +5,11 @@
  * Contains farm_notifications.module.
  */
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
 
 /**
  * Implements hook_ENTITY_TYPE_update().
  */
-
-
 function farm_notifications_log_update(EntityInterface $entity) {
 
 	//log variables		
@@ -20,43 +19,101 @@ function farm_notifications_log_update(EntityInterface $entity) {
 	$status = $entity->status->value;
 	$notes = $entity->notes->value;
 	$full_log = $entity->toArray();
+	$notify = $entity->farm_notification_notify->value;
+	$timestamp = $entity->timestamp->value;
 	//settings variables
 	$server_address = \Drupal::config('farm_notifications.settings')->get('server_address');
 	$server_type = \Drupal::config('farm_notifications.settings')->get('server_type');
+	
+	$dt = new DateTime("@$timestamp");
+	$datetime = $dt->format('d-m-Y H:i:s');
+	
 
-if ($server_type == "node_red"){
-	//http request
-	try {
-		//Create httpClient.
-		$client = \Drupal::httpClient();
-		//Some Data
-	$json_data = ['log'=>$name,'id'=>$id,'uuid'=>$uuid,'status'=>$status,'notes'=>$notes,'full_log'=>$full_log];
-		//Sending POST Request with $json_data to external server
-		$request = $client->post($server_address, [ 'json' => [ $json_data, ]]);
-		//Getting Response after JSON Decode.
-		$response = json_decode($request->getBody());
-	} 
-	//Catch http exceptions and log errors
-	catch (\Exception $e) {
-		\Drupal::logger('farm_notifications')->error($e->getMessage());
+	if (($notify == "0") || ($notify == "1" && $status =="pending") ||$notify == "2" && $status =="done" ){
+		if ($server_type == "node_red"){
+			//http request
+			try {
+				//Create httpClient.
+				$client = \Drupal::httpClient();
+				//Some Data
+				$json_data = ['log'=>$name,'id'=>$id,'uuid'=>$uuid,'status'=>$status,'notes'=>$notes,'full_log'=>$full_log];
+				//Sending POST Request with $json_data to external server
+				$request = $client->post($server_address, [ 'json' => [ $json_data, ]]);
+				//Getting Response after JSON Decode.
+				$response = json_decode($request->getBody());
+			} 
+				//Catch http exceptions and log errors
+			catch (\Exception $e) {
+				\Drupal::logger('farm_notifications')->error($e->getMessage());
+			}
+		}
+
+		if ($server_type == "ntfy"){
+			//http request
+			try {
+				//Create httpClient.
+				$client = \Drupal::httpClient();
+				//Some Data
+				$data = "Log updated: $name \nTimestamp: $datetime \nStatus: $status \nNotes: $notes";
+				//Sending POST Request with $json_data to external server
+				$request = $client->post($server_address, [ 'body' => $data]);
+				//Getting Response after JSON Decode.
+				$response = json_decode($request->getBody());
+			} 
+			//Catch http exceptions and log errors
+			catch (\Exception $e) {
+				\Drupal::logger('farm_notifications')->error($e->getMessage());
+			}
+		}
+		
+				if ($server_type == "telegram"){
+			//http request
+			try {
+				//Create httpClient.
+				$client = \Drupal::httpClient();
+				//Some Data
+				$data = "$server_address Log updated: $name \nTimestamp: $datetime \nStatus: $status \nNotes: $notes";
+				//Sending POST Request with $json_data to external server
+				$request = $client->post($data);
+				//Getting Response after JSON Decode.
+				$response = json_decode($request->getBody());
+			} 
+			//Catch http exceptions and log errors
+			catch (\Exception $e) {
+				\Drupal::logger('farm_notifications')->error($e->getMessage());
+			}
+		}
 	}
 }
 
-if ($server_type == "ntfy"){
-	//http request
-	try {
-		//Create httpClient.
-		$client = \Drupal::httpClient();
-		//Some Data
-		$data = "FarmOS Log updated: $name \n Status: $status";
-		//Sending POST Request with $json_data to external server
-	$request = $client->post($server_address, [ 'body' => $data]);
-		//Getting Response after JSON Decode.
-		$response = json_decode($request->getBody());
-	} 
-	//Catch http exceptions and log errors
-	catch (\Exception $e) {
-		\Drupal::logger('farm_notifications')->error($e->getMessage());
-	}
-	}
+/**
+ * Implements hook_entity_base_field_info().
+ * 
+ */
+function farm_notifications_entity_base_field_info(EntityTypeInterface $entity_type) {
+  $fields = [];
+
+  // 'log' specifies the entity type to apply to.
+  if ($entity_type->id() == 'log') {
+    // Options for the new field. See Field options below.
+    $options = [
+      'type' => 'list_string',
+      'label' => t('Notify'),
+      'description' => t('Send update notifications for this log.'),
+      'allowed_values' => [
+        0 => t('All'),
+		1 => t('Pending'),
+		2 => t('Done')
+      ],
+	 // 'default_value' => 0,
+      'weight' => [
+        'form' => 10,
+        'view' => 10,
+      ],
+    ];
+    //Define field
+    $fields['farm_notification_notify'] = \Drupal::service('farm_field.factory')->baseFieldDefinition($options);
+  }
+
+  return $fields;
 }

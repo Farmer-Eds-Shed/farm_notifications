@@ -55,6 +55,7 @@ class FarmNotificationsSettingsForm extends ConfigFormbase {
       '#options' => [
         'node_red' => $this->t('Node-Red'),
         'ntfy' => $this->t('ntfy'),
+		'telegram' => $this->t('Telegram'),
       ],
 	  '#default_value' => $config->get('server_type'),
     ];
