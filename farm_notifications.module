@@ -19,7 +19,7 @@ function farm_notifications_log_update(EntityInterface $entity) {
 	$status = $entity->status->value;
 	$notes = $entity->notes->value;
 	$full_log = $entity->toArray();
-	$notify = $entity->notify->value;
+	$notify = $entity->farm_notification_notify->value;
 	$timestamp = $entity->timestamp->value;
 	//settings variables
 	$server_address = \Drupal::config('farm_notifications.settings')->get('server_address');
@@ -41,10 +41,13 @@ function farm_notifications_log_update(EntityInterface $entity) {
 				$request = $client->post($server_address, [ 'json' => [ $json_data, ]]);
 				//Getting Response after JSON Decode.
 				$response = json_decode($request->getBody());
+				\Drupal::messenger()->addStatus(t('Successful message.'));
+				\Drupal::messenger()->addStatus(t("Log: $name notification sent via Node-Red"));
 			} 
 				//Catch http exceptions and log errors
 			catch (\Exception $e) {
 				\Drupal::logger('farm_notifications')->error($e->getMessage());
+				\Drupal::messenger()->addError(t("Log: $name notification failed via Node-Red"));
 			}
 		}
 
@@ -59,10 +62,12 @@ function farm_notifications_log_update(EntityInterface $entity) {
 				$request = $client->post($server_address, [ 'body' => $data]);
 				//Getting Response after JSON Decode.
 				$response = json_decode($request->getBody());
+				\Drupal::messenger()->addStatus(t("Log: $name notification sent via ntfy"));
 			} 
 			//Catch http exceptions and log errors
 			catch (\Exception $e) {
 				\Drupal::logger('farm_notifications')->error($e->getMessage());
+				\Drupal::messenger()->addError(t("Log: $name notification failed via ntfy"));
 			}
 		}
 		
@@ -77,10 +82,12 @@ function farm_notifications_log_update(EntityInterface $entity) {
 				$request = $client->post($data);
 				//Getting Response after JSON Decode.
 				$response = json_decode($request->getBody());
+				\Drupal::messenger()->addStatus(t("Log: $name notification sent via Telegram"));
 			} 
 			//Catch http exceptions and log errors
 			catch (\Exception $e) {
 				\Drupal::logger('farm_notifications')->error($e->getMessage());
+				\Drupal::messenger()->addError(t("Log: $name notification failed via Telegram"));
 			}
 		}
 	}
@@ -112,7 +119,7 @@ function farm_notifications_entity_base_field_info(EntityTypeInterface $entity_t
       ],
     ];
     //Define field
-    $fields['notify'] = \Drupal::service('farm_field.factory')->baseFieldDefinition($options);
+    $fields['farm_notification_notify'] = \Drupal::service('farm_field.factory')->baseFieldDefinition($options);
   }
 
   return $fields;
